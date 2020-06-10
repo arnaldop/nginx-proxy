@@ -437,20 +437,18 @@ def nginxproxy():
 
 # pytest hook to display additionnal stuff in test report
 def pytest_runtest_logreport(report):
-    if report.failed:
-        if isinstance(report.longrepr, ReprExceptionInfo):
-            test_containers = docker_client.containers.list(all=True, filters={"ancestor": "jwilder/nginx-proxy:test"})
-            for container in test_containers:
-                report.longrepr.addsection('nginx-proxy logs', container.logs())
-                report.longrepr.addsection('nginx-proxy conf', get_nginx_conf_from_container(container))
+    if report.failed and isinstance(report.longrepr, ReprExceptionInfo):
+        test_containers = docker_client.containers.list(all=True, filters={"ancestor": "jwilder/nginx-proxy:test"})
+        for container in test_containers:
+            report.longrepr.addsection('nginx-proxy logs', container.logs())
+            report.longrepr.addsection('nginx-proxy conf', get_nginx_conf_from_container(container))
 
 
 # Py.test `incremental` marker, see http://stackoverflow.com/a/12579625/107049
 def pytest_runtest_makereport(item, call):
-    if "incremental" in item.keywords:
-        if call.excinfo is not None:
-            parent = item.parent
-            parent._previousfailed = item
+    if "incremental" in item.keywords and call.excinfo is not None:
+        parent = item.parent
+        parent._previousfailed = item
 
 
 def pytest_runtest_setup(item):
